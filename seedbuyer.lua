@@ -1,5 +1,5 @@
 -- ══════════════════════════════════════
---           verion = 5
+--           verion = 7
 -- ══════════════════════════════════════
 
 local PREFIXES = {
@@ -16,6 +16,18 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Event = ReplicatedStorage.SharedModules.Packet.RemoteEvent
 
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+-- ══════════════════════════════════════
+--           MUTE BUY FAIL SOUND
+-- ══════════════════════════════════════
+
+game:GetService("SoundService").DescendantAdded:Connect(function(v)
+    if v:IsA("Sound") and v.Name == "TemporarySFX" and v.SoundId == "rbxassetid://550209561" then
+        v:Stop()
+        v.Volume = 0
+        v:Destroy()
+    end
+end)
 
 local function encode(prefix, name)
     assert(#name <= 255, "item name too long: " .. name)
