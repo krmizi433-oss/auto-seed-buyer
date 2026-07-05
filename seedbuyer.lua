@@ -58,8 +58,8 @@ local SeedTab = Window:CreateTab("Seed Shop", 4483362458)
 local seeds = {
     "Carrot", "Strawberry", "Blueberry", "Tulip", "Tomato", "Apple",
     "Bamboo", "Corn", "Cactus", "Pineapple", "Mushroom", "Green Bean",
-    "Banana", "Grape", "Coconut", "Mango", "Dragon Fruit", "Acorn",
-    "Cherry", "Sunflower", "Venus Fly Trap", "Pomegranate", "Poison Apple",
+    "Banana", "Grape", "Coconut", "Mango", "Rocket Pop", "Dragon Fruit", "Acorn",
+    "Cherry", "Sunflower", "Fire Fern", "Venus Fly Trap", "Pomegranate", "Poison Apple",
     "Venom Spitter", "Moon Bloom", "Hypno Bloom", "Dragon's Breath",
 }
 
@@ -105,9 +105,11 @@ SeedTab:CreateToggle({
                     end
                     for _, name in ipairs(selectedSeeds) do
                         if not seedLooping then return end
-                        fireAndNotify(PREFIXES.seeds, name)
-                        task.wait(seedDelay)
+                        task.spawn(function()
+                            fireAndNotify(PREFIXES.seeds, name)
+                        end)
                     end
+                    task.wait(seedDelay)
                 end
             end)
         end
@@ -170,15 +172,16 @@ ItemTab:CreateToggle({
                     end
                     for _, name in ipairs(selectedShopItems) do
                         if not itemLooping then return end
-                        fireAndNotify(PREFIXES.items, name)
-                        task.wait(itemDelay)
+                        task.spawn(function()
+                            fireAndNotify(PREFIXES.items, name)
+                        end)
                     end
+                    task.wait(itemDelay)
                 end
             end)
         end
     end,
 })
-
 -- ══════════════════════════════════════
 --               PROP SHOP
 -- ══════════════════════════════════════
@@ -187,9 +190,9 @@ local PropTab = Window:CreateTab("Prop Shop", 4483362458)
 
 local props = {
     "Light Crate", "Ladder Crate", "Bench Crate", "Sign Crate",
-    "Arch Crate", "Roleplay Crate", "Picture Frame Crate", "Bridge Crate",
+    "Arch Crate", "Roleplay Crate", "Picture Frame Crate", "Fourth of July Crate", "Bridge Crate",
     "Spring Crate", "Seesaw Crate", "Conveyor Crate", "Owner Door Crate",
-    "Bear Trap Crate", "Fence Crate", "Teleporter Pad Crate",
+    "Bear Trap Crate", "Boombox Crate", "Fence Crate", "Teleporter Pad Crate",
 }
 
 local selectedProps = {}
@@ -234,9 +237,11 @@ PropTab:CreateToggle({
                     end
                     for _, name in ipairs(selectedProps) do
                         if not propLooping then return end
-                        fireAndNotify(PREFIXES.props, name)
-                        task.wait(propDelay)
+                        task.spawn(function()
+                            fireAndNotify(PREFIXES.props, name)
+                        end)
                     end
+                    task.wait(propDelay)
                 end
             end)
         end
