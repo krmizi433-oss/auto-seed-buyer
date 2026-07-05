@@ -39,9 +39,15 @@ end
 -- ══════════════════════════════════════
 
 local Window = Rayfield:CreateWindow({
-    Name = "Packet Sender",
+    Name = "Seed/Item/Prop buyer | discord.gg/JWqf2cBzYC",
     LoadingTitle = "discord.gg/JWqf2cBzYC",
     ConfigurationSaving = { Enabled = false },
+})
+
+Rayfield:Notify({
+    Title = "Suggestions & Missing Items?",
+    Content = "Join the Discord — discord.gg/JWqf2cBzYC",
+    Duration = 8,
 })
 
 -- ══════════════════════════════════════
@@ -316,6 +322,17 @@ SettingsTab:CreateToggle({
 -- ══════════════════════════════════════
 --           DESTROY / RESPAWN UI
 -- ══════════════════════════════════════
+
+SettingsTab:CreateButton({
+    Name = "⭐ Suggestions & Missing Items — Join Discord",
+    Callback = function()
+        Rayfield:Notify({
+            Title = "Suggestions & Missing Items?",
+            Content = "Join the Discord — discord.gg/JWqf2cBzYC",
+            Duration = 8,
+        })
+    end,
+})
 
 SettingsTab:CreateButton({
     Name = "Destroy UI",
