@@ -261,120 +261,6 @@ PropTab:CreateToggle({
 })
 
 -- ══════════════════════════════════════
---              SETTINGS
--- ══════════════════════════════════════
-
-local SettingsTab = Window:CreateTab("Settings", 4483362458)
-
-SettingsTab:CreateParagraph({
-    Title = "Suggestions & Missing Items?",
-    Content = "Join the Discord for suggestions, bug reports, or missing seeds/items.\ndiscord.gg/JWqf2cBzYC",
-})
-
--- ══════════════════════════════════════
---              ANTI AFK
--- ══════════════════════════════════════
-
-local afkThread = nil
-
-local function doJump()
-    local character = game.Players.LocalPlayer.Character
-    if not character then return end
-    local humanoid = character:FindFirstChildOfClass("Humanoid")
-    if not humanoid then return end
-    humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-end
-
-SettingsTab:CreateToggle({
-    Name = "Anti AFK",
-    CurrentValue = false,
-    Callback = function(state)
-        if state then
-            if afkThread then task.cancel(afkThread) end
-            afkThread = task.spawn(function()
-                while true do
-                    task.wait(math.random(270, 450))
-                    doJump()
-                end
-            end)
-        else
-            if afkThread then
-                task.cancel(afkThread)
-                afkThread = nil
-            end
-        end
-    end,
-})
-
--- ══════════════════════════════════════
---           STOP ALL LOOPS
--- ══════════════════════════════════════
-
-SettingsTab:CreateButton({
-    Name = "Stop All Loops",
-    Callback = function()
-        seedLooping = false
-        itemLooping = false
-        propLooping = false
-        if seedThread then task.cancel(seedThread) seedThread = nil end
-        if itemThread then task.cancel(itemThread) itemThread = nil end
-        if propThread then task.cancel(propThread) propThread = nil end
-        if afkThread then task.cancel(afkThread) afkThread = nil end
-        Rayfield:Notify({
-            Title = "Loops Stopped",
-            Content = "All loops including Anti AFK have been halted.",
-            Duration = 3,
-        })
-    end,
-})
-
--- ══════════════════════════════════════
---           NOTIFICATION LOG
--- ══════════════════════════════════════
-
-SettingsTab:CreateToggle({
-    Name = "Buy Notifications",
-    CurrentValue = false,
-    Callback = function(state)
-        notifyEnabled = state
-    end,
-})
-
--- ══════════════════════════════════════
---           DESTROY / RESPAWN UI
--- ══════════════════════════════════════
-
-SettingsTab:CreateButton({
-    Name = "Destroy UI",
-    Callback = function()
-        seedLooping = false
-        itemLooping = false
-        propLooping = false
-        if seedThread then task.cancel(seedThread) seedThread = nil end
-        if itemThread then task.cancel(itemThread) itemThread = nil end
-        if propThread then task.cancel(propThread) propThread = nil end
-        if afkThread then task.cancel(afkThread) afkThread = nil end
-        Rayfield:Destroy()
-    end,
-})
-
-SettingsTab:CreateButton({
-    Name = "Respawn UI",
-    Callback = function()
-        seedLooping = false
-        itemLooping = false
-        propLooping = false
-        if seedThread then task.cancel(seedThread) seedThread = nil end
-        if itemThread then task.cancel(itemThread) itemThread = nil end
-        if propThread then task.cancel(propThread) propThread = nil end
-        if afkThread then task.cancel(afkThread) afkThread = nil end
-        Rayfield:Destroy()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/krmizi433-oss/auto-seed-buyer/refs/heads/main/seedbuyer.lua"))()
-    end,
-})
-
-
--- ══════════════════════════════════════
 --           SEED PACK COLLECTOR
 -- ══════════════════════════════════════
 
@@ -514,3 +400,117 @@ SeedPackTab:CreateSlider({
         SP_TWEEN_SPEED = val
     end,
 })
+
+-- ══════════════════════════════════════
+--              SETTINGS
+-- ══════════════════════════════════════
+
+local SettingsTab = Window:CreateTab("Settings", 4483362458)
+
+SettingsTab:CreateParagraph({
+    Title = "Suggestions & Missing Items?",
+    Content = "Join the Discord for suggestions, bug reports, or missing seeds/items.\ndiscord.gg/JWqf2cBzYC",
+})
+
+-- ══════════════════════════════════════
+--              ANTI AFK
+-- ══════════════════════════════════════
+
+local afkThread = nil
+
+local function doJump()
+    local character = game.Players.LocalPlayer.Character
+    if not character then return end
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if not humanoid then return end
+    humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+end
+
+SettingsTab:CreateToggle({
+    Name = "Anti AFK",
+    CurrentValue = false,
+    Callback = function(state)
+        if state then
+            if afkThread then task.cancel(afkThread) end
+            afkThread = task.spawn(function()
+                while true do
+                    task.wait(math.random(270, 450))
+                    doJump()
+                end
+            end)
+        else
+            if afkThread then
+                task.cancel(afkThread)
+                afkThread = nil
+            end
+        end
+    end,
+})
+
+-- ══════════════════════════════════════
+--           STOP ALL LOOPS
+-- ══════════════════════════════════════
+
+SettingsTab:CreateButton({
+    Name = "Stop All Loops",
+    Callback = function()
+        seedLooping = false
+        itemLooping = false
+        propLooping = false
+        if seedThread then task.cancel(seedThread) seedThread = nil end
+        if itemThread then task.cancel(itemThread) itemThread = nil end
+        if propThread then task.cancel(propThread) propThread = nil end
+        if afkThread then task.cancel(afkThread) afkThread = nil end
+        Rayfield:Notify({
+            Title = "Loops Stopped",
+            Content = "All loops including Anti AFK have been halted.",
+            Duration = 3,
+        })
+    end,
+})
+
+-- ══════════════════════════════════════
+--           NOTIFICATION LOG
+-- ══════════════════════════════════════
+
+SettingsTab:CreateToggle({
+    Name = "Buy Notifications",
+    CurrentValue = false,
+    Callback = function(state)
+        notifyEnabled = state
+    end,
+})
+
+-- ══════════════════════════════════════
+--           DESTROY / RESPAWN UI
+-- ══════════════════════════════════════
+
+SettingsTab:CreateButton({
+    Name = "Destroy UI",
+    Callback = function()
+        seedLooping = false
+        itemLooping = false
+        propLooping = false
+        if seedThread then task.cancel(seedThread) seedThread = nil end
+        if itemThread then task.cancel(itemThread) itemThread = nil end
+        if propThread then task.cancel(propThread) propThread = nil end
+        if afkThread then task.cancel(afkThread) afkThread = nil end
+        Rayfield:Destroy()
+    end,
+})
+
+SettingsTab:CreateButton({
+    Name = "Respawn UI",
+    Callback = function()
+        seedLooping = false
+        itemLooping = false
+        propLooping = false
+        if seedThread then task.cancel(seedThread) seedThread = nil end
+        if itemThread then task.cancel(itemThread) itemThread = nil end
+        if propThread then task.cancel(propThread) propThread = nil end
+        if afkThread then task.cancel(afkThread) afkThread = nil end
+        Rayfield:Destroy()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/krmizi433-oss/auto-seed-buyer/refs/heads/main/seedbuyer.lua"))()
+    end,
+})
+
