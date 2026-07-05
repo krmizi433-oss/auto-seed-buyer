@@ -1,6 +1,5 @@
 -- ══════════════════════════════════════
---           VERSION CONFIG
---     Update these when game patches
+--           verion = 5
 -- ══════════════════════════════════════
 
 local PREFIXES = {
