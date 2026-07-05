@@ -249,6 +249,11 @@ PropTab:CreateToggle({
 
 local SettingsTab = Window:CreateTab("Settings", 4483362458)
 
+SettingsTab:CreateParagraph({
+    Title = "Suggestions & Missing Items?",
+    Content = "Join the Discord for suggestions, bug reports, or missing seeds/items.\ndiscord.gg/JWqf2cBzYC",
+})
+
 -- ══════════════════════════════════════
 --              ANTI AFK
 -- ══════════════════════════════════════
@@ -321,17 +326,6 @@ SettingsTab:CreateToggle({
 -- ══════════════════════════════════════
 --           DESTROY / RESPAWN UI
 -- ══════════════════════════════════════
-
-SettingsTab:CreateButton({
-    Name = "⭐ Suggestions & Missing Items — Join Discord",
-    Callback = function()
-        Rayfield:Notify({
-            Title = "Suggestions & Missing Items?",
-            Content = "Join the Discord — discord.gg/JWqf2cBzYC",
-            Duration = 8,
-        })
-    end,
-})
 
 SettingsTab:CreateButton({
     Name = "Destroy UI",
