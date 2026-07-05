@@ -1,25 +1,17 @@
 -- ══════════════════════════════════════
---           verion = 8
+--           version = 10
 -- ══════════════════════════════════════
 
 local PREFIXES = {
-    seeds = "{",       -- 0x7B
-    items = "\x7F",    -- 0x7F
-    props = "}",       -- 0x7D
+    seeds = "{",
+    items = "\x7F",
+    props = "}",
 }
-
--- ══════════════════════════════════════
---              CORE
--- ══════════════════════════════════════
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Event = ReplicatedStorage.SharedModules.Packet.RemoteEvent
 
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
-
--- ══════════════════════════════════════
---           MUTE BUY FAIL SOUND
--- ══════════════════════════════════════
 
 game:GetService("SoundService").DescendantAdded:Connect(function(v)
     if v:IsA("Sound") and v.Name == "TemporarySFX" and v.SoundId == "rbxassetid://550209561" then
@@ -34,20 +26,9 @@ local function encode(prefix, name)
     return buffer.fromstring(prefix .. "\x00" .. string.char(#name) .. name)
 end
 
-local notifyEnabled = false
-
 local function fireAndNotify(prefix, name)
     Event:FireServer(encode(prefix, name))
-    if notifyEnabled then
-        Rayfield:Notify({
-            Title = "Purchased",
-            Content = name,
-            Duration = 1.5,
-        })
-    end
 end
-
--- ══════════════════════════════════════
 
 local Window = Rayfield:CreateWindow({
     Name = "Seed/Item/Prop buyer | discord.gg/JWqf2cBzYC",
@@ -79,6 +60,7 @@ local selectedSeeds = {}
 local seedDelay = 0.2
 local seedLooping = false
 local seedThread = nil
+local SeedToggle = nil
 
 SeedTab:CreateDropdown({
     Name = "Select Seeds",
@@ -102,7 +84,7 @@ SeedTab:CreateSlider({
     end,
 })
 
-SeedTab:CreateToggle({
+SeedToggle = SeedTab:CreateToggle({
     Name = "Auto Buy Seeds",
     CurrentValue = false,
     Callback = function(state)
@@ -111,15 +93,10 @@ SeedTab:CreateToggle({
         if state then
             seedThread = task.spawn(function()
                 while seedLooping do
-                    if #selectedSeeds == 0 then
-                        task.wait(0.5)
-                        continue
-                    end
+                    if #selectedSeeds == 0 then task.wait(0.5) continue end
                     for _, name in ipairs(selectedSeeds) do
                         if not seedLooping then return end
-                        task.spawn(function()
-                            fireAndNotify(PREFIXES.seeds, name)
-                        end)
+                        fireAndNotify(PREFIXES.seeds, name)
                     end
                     task.wait(seedDelay)
                 end
@@ -146,6 +123,7 @@ local selectedShopItems = {}
 local itemDelay = 0.2
 local itemLooping = false
 local itemThread = nil
+local ItemToggle = nil
 
 ItemTab:CreateDropdown({
     Name = "Select Items",
@@ -169,7 +147,7 @@ ItemTab:CreateSlider({
     end,
 })
 
-ItemTab:CreateToggle({
+ItemToggle = ItemTab:CreateToggle({
     Name = "Auto Buy Items",
     CurrentValue = false,
     Callback = function(state)
@@ -178,15 +156,10 @@ ItemTab:CreateToggle({
         if state then
             itemThread = task.spawn(function()
                 while itemLooping do
-                    if #selectedShopItems == 0 then
-                        task.wait(0.5)
-                        continue
-                    end
+                    if #selectedShopItems == 0 then task.wait(0.5) continue end
                     for _, name in ipairs(selectedShopItems) do
                         if not itemLooping then return end
-                        task.spawn(function()
-                            fireAndNotify(PREFIXES.items, name)
-                        end)
+                        fireAndNotify(PREFIXES.items, name)
                     end
                     task.wait(itemDelay)
                 end
@@ -194,6 +167,7 @@ ItemTab:CreateToggle({
         end
     end,
 })
+
 -- ══════════════════════════════════════
 --               PROP SHOP
 -- ══════════════════════════════════════
@@ -211,6 +185,7 @@ local selectedProps = {}
 local propDelay = 0.2
 local propLooping = false
 local propThread = nil
+local PropToggle = nil
 
 PropTab:CreateDropdown({
     Name = "Select Props",
@@ -234,7 +209,7 @@ PropTab:CreateSlider({
     end,
 })
 
-PropTab:CreateToggle({
+PropToggle = PropTab:CreateToggle({
     Name = "Auto Buy Props",
     CurrentValue = false,
     Callback = function(state)
@@ -243,15 +218,10 @@ PropTab:CreateToggle({
         if state then
             propThread = task.spawn(function()
                 while propLooping do
-                    if #selectedProps == 0 then
-                        task.wait(0.5)
-                        continue
-                    end
+                    if #selectedProps == 0 then task.wait(0.5) continue end
                     for _, name in ipairs(selectedProps) do
                         if not propLooping then return end
-                        task.spawn(function()
-                            fireAndNotify(PREFIXES.props, name)
-                        end)
+                        fireAndNotify(PREFIXES.props, name)
                     end
                     task.wait(propDelay)
                 end
@@ -270,21 +240,13 @@ local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 
 local spPlayer = Players.LocalPlayer
-local spCharacter = spPlayer.Character or spPlayer.CharacterAdded:Wait()
-local spHRP = spCharacter:WaitForChild("HumanoidRootPart")
-local spHumanoid = spCharacter:WaitForChild("Humanoid")
 
-local SP_TWEEN_SPEED  = 14   -- studs/sec
-local SP_COOLDOWN     = 2    -- seconds between each Part
+local SP_TWEEN_SPEED = 14
+local SP_COOLDOWN    = 2
 
 local spRunning = false
 local spThread  = nil
-
-spPlayer.CharacterAdded:Connect(function(newChar)
-    spCharacter = newChar
-    spHRP       = newChar:WaitForChild("HumanoidRootPart")
-    spHumanoid  = newChar:WaitForChild("Humanoid")
-end)
+local SeedPackToggle = nil
 
 local function spTweenTime(from, to)
     local dist = math.max((from - to).Magnitude, 4)
@@ -292,11 +254,11 @@ local function spTweenTime(from, to)
 end
 
 local function spCollectAll()
-    local container = workspace:WaitForChild("Map", 20)
-        and workspace.Map:WaitForChild("SeedPackSpawnServerLocations", 20)
+    local container = workspace:FindFirstChild("Map")
+        and workspace.Map:FindFirstChild("SeedPackSpawnServerLocations")
 
     if not container then
-        warn("[SeedPack] Could not find SeedPackSpawnServerLocations")
+        warn("[SeedPack] SeedPackSpawnServerLocations not found")
         return
     end
 
@@ -308,12 +270,18 @@ local function spCollectAll()
     end
 
     if #parts == 0 then
-        warn("[SeedPack] No Parts found in SeedPackSpawnServerLocations")
+        warn("[SeedPack] No Parts found")
         return
     end
 
     for _, part in ipairs(parts) do
         if not spRunning then break end
+
+        local character = spPlayer.Character
+        if not character then task.wait(0.5) continue end
+        local hrp      = character:FindFirstChild("HumanoidRootPart")
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+        if not hrp or not humanoid then task.wait(0.5) continue end
 
         local prompt = part:FindFirstChildOfClass("ProximityPrompt")
         if not prompt or not prompt.Enabled then
@@ -321,33 +289,43 @@ local function spCollectAll()
             continue
         end
 
-        -- tween directly to the part
-        local targetCFrame = CFrame.new(part.Position)
         local info = TweenInfo.new(
-            spTweenTime(spHRP.Position, part.Position),
+            spTweenTime(hrp.Position, part.Position),
             Enum.EasingStyle.Sine,
             Enum.EasingDirection.InOut
         )
 
-        spHumanoid.WalkSpeed = 0
-        spHumanoid.JumpPower = 0
+        humanoid.WalkSpeed = 0
+        humanoid.JumpPower = 0
 
-        local tween = TweenService:Create(spHRP, info, { CFrame = targetCFrame })
+        local tween = TweenService:Create(hrp, info, { CFrame = CFrame.new(part.Position) })
         tween:Play()
         tween.Completed:Wait()
 
         task.wait(0.1)
 
-        fireproximityprompt(prompt)
+        local ok, err = pcall(function()
+            fireproximityprompt(prompt)
+        end)
+        if not ok then
+            warn("[SeedPack] fireproximityprompt failed:", err)
+        end
 
         task.wait(SP_COOLDOWN)
 
-        spHumanoid.WalkSpeed = 16
-        spHumanoid.JumpPower = 50
+        humanoid.WalkSpeed = 16
+        humanoid.JumpPower = 50
     end
 
-    spHumanoid.WalkSpeed = 16
-    spHumanoid.JumpPower = 50
+    local character = spPlayer.Character
+    if character then
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            humanoid.WalkSpeed = 16
+            humanoid.JumpPower = 50
+        end
+    end
+
     spRunning = false
 
     Rayfield:Notify({
@@ -357,7 +335,7 @@ local function spCollectAll()
     })
 end
 
-SeedPackTab:CreateToggle({
+SeedPackToggle = SeedPackTab:CreateToggle({
     Name = "Auto Collect Seed Packs",
     CurrentValue = false,
     Callback = function(state)
@@ -367,14 +345,18 @@ SeedPackTab:CreateToggle({
             spThread = task.spawn(function()
                 while spRunning do
                     spCollectAll()
-                    if spRunning then
-                        task.wait(5) -- wait before looping through all parts again
-                    end
+                    if spRunning then task.wait(5) end
                 end
             end)
         else
-            spHumanoid.WalkSpeed = 16
-            spHumanoid.JumpPower = 50
+            local character = spPlayer.Character
+            if character then
+                local humanoid = character:FindFirstChildOfClass("Humanoid")
+                if humanoid then
+                    humanoid.WalkSpeed = 16
+                    humanoid.JumpPower = 50
+                end
+            end
         end
     end,
 })
@@ -417,6 +399,7 @@ SettingsTab:CreateParagraph({
 -- ══════════════════════════════════════
 
 local afkThread = nil
+local AfkToggle = nil
 
 local function doJump()
     local character = game.Players.LocalPlayer.Character
@@ -426,7 +409,7 @@ local function doJump()
     humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
 end
 
-SettingsTab:CreateToggle({
+AfkToggle = SettingsTab:CreateToggle({
     Name = "Anti AFK",
     CurrentValue = false,
     Callback = function(state)
@@ -451,33 +434,45 @@ SettingsTab:CreateToggle({
 --           STOP ALL LOOPS
 -- ══════════════════════════════════════
 
+local function stopAll()
+    seedLooping = false
+    itemLooping = false
+    propLooping = false
+    spRunning   = false
+
+    if seedThread then task.cancel(seedThread) seedThread = nil end
+    if itemThread then task.cancel(itemThread) itemThread = nil end
+    if propThread then task.cancel(propThread) propThread = nil end
+    if spThread   then task.cancel(spThread)   spThread   = nil end
+    if afkThread  then task.cancel(afkThread)  afkThread  = nil end
+
+    -- visually flip every toggle off
+    if SeedToggle    then SeedToggle:Set(false)     end
+    if ItemToggle    then ItemToggle:Set(false)     end
+    if PropToggle    then PropToggle:Set(false)     end
+    if SeedPackToggle then SeedPackToggle:Set(false) end
+    if AfkToggle     then AfkToggle:Set(false)      end
+
+    -- restore movement in case seed pack was mid-tween
+    local character = spPlayer.Character
+    if character then
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            humanoid.WalkSpeed = 16
+            humanoid.JumpPower = 50
+        end
+    end
+end
+
 SettingsTab:CreateButton({
     Name = "Stop All Loops",
     Callback = function()
-        seedLooping = false
-        itemLooping = false
-        propLooping = false
-        if seedThread then task.cancel(seedThread) seedThread = nil end
-        if itemThread then task.cancel(itemThread) itemThread = nil end
-        if propThread then task.cancel(propThread) propThread = nil end
-        if afkThread then task.cancel(afkThread) afkThread = nil end
+        stopAll()
         Rayfield:Notify({
             Title = "Loops Stopped",
             Content = "All loops including Anti AFK have been halted.",
             Duration = 3,
         })
-    end,
-})
-
--- ══════════════════════════════════════
---           NOTIFICATION LOG
--- ══════════════════════════════════════
-
-SettingsTab:CreateToggle({
-    Name = "Buy Notifications",
-    CurrentValue = false,
-    Callback = function(state)
-        notifyEnabled = state
     end,
 })
 
@@ -488,13 +483,7 @@ SettingsTab:CreateToggle({
 SettingsTab:CreateButton({
     Name = "Destroy UI",
     Callback = function()
-        seedLooping = false
-        itemLooping = false
-        propLooping = false
-        if seedThread then task.cancel(seedThread) seedThread = nil end
-        if itemThread then task.cancel(itemThread) itemThread = nil end
-        if propThread then task.cancel(propThread) propThread = nil end
-        if afkThread then task.cancel(afkThread) afkThread = nil end
+        stopAll()
         Rayfield:Destroy()
     end,
 })
@@ -502,15 +491,8 @@ SettingsTab:CreateButton({
 SettingsTab:CreateButton({
     Name = "Respawn UI",
     Callback = function()
-        seedLooping = false
-        itemLooping = false
-        propLooping = false
-        if seedThread then task.cancel(seedThread) seedThread = nil end
-        if itemThread then task.cancel(itemThread) itemThread = nil end
-        if propThread then task.cancel(propThread) propThread = nil end
-        if afkThread then task.cancel(afkThread) afkThread = nil end
+        stopAll()
         Rayfield:Destroy()
         loadstring(game:HttpGet("https://raw.githubusercontent.com/krmizi433-oss/auto-seed-buyer/refs/heads/main/seedbuyer.lua"))()
     end,
 })
-
