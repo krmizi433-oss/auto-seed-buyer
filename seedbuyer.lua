@@ -19,6 +19,7 @@ local Event = ReplicatedStorage.SharedModules.Packet.RemoteEvent
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local function encode(prefix, name)
+    assert(#name <= 255, "item name too long: " .. name)
     return buffer.fromstring(prefix .. "\x00" .. string.char(#name) .. name)
 end
 
@@ -39,7 +40,7 @@ end
 
 local Window = Rayfield:CreateWindow({
     Name = "Packet Sender",
-    LoadingTitle = "Loading...",
+    LoadingTitle = "discord.gg/JWqf2cBzYC",
     ConfigurationSaving = { Enabled = false },
 })
 
@@ -59,6 +60,8 @@ local seeds = {
 
 local selectedSeeds = {}
 local seedDelay = 0.2
+local seedLooping = false
+local seedThread = nil
 
 SeedTab:CreateDropdown({
     Name = "Select Seeds",
@@ -82,15 +85,14 @@ SeedTab:CreateSlider({
     end,
 })
 
-local seedLooping = false
-
 SeedTab:CreateToggle({
     Name = "Auto Buy Seeds",
     CurrentValue = false,
     Callback = function(state)
         seedLooping = state
+        if seedThread then task.cancel(seedThread) seedThread = nil end
         if state then
-            task.spawn(function()
+            seedThread = task.spawn(function()
                 while seedLooping do
                     if #selectedSeeds == 0 then
                         task.wait(0.5)
@@ -123,6 +125,8 @@ local shopItems = {
 
 local selectedShopItems = {}
 local itemDelay = 0.2
+local itemLooping = false
+local itemThread = nil
 
 ItemTab:CreateDropdown({
     Name = "Select Items",
@@ -146,15 +150,14 @@ ItemTab:CreateSlider({
     end,
 })
 
-local itemLooping = false
-
 ItemTab:CreateToggle({
     Name = "Auto Buy Items",
     CurrentValue = false,
     Callback = function(state)
         itemLooping = state
+        if itemThread then task.cancel(itemThread) itemThread = nil end
         if state then
-            task.spawn(function()
+            itemThread = task.spawn(function()
                 while itemLooping do
                     if #selectedShopItems == 0 then
                         task.wait(0.5)
@@ -186,6 +189,8 @@ local props = {
 
 local selectedProps = {}
 local propDelay = 0.2
+local propLooping = false
+local propThread = nil
 
 PropTab:CreateDropdown({
     Name = "Select Props",
@@ -209,15 +214,14 @@ PropTab:CreateSlider({
     end,
 })
 
-local propLooping = false
-
 PropTab:CreateToggle({
     Name = "Auto Buy Props",
     CurrentValue = false,
     Callback = function(state)
         propLooping = state
+        if propThread then task.cancel(propThread) propThread = nil end
         if state then
-            task.spawn(function()
+            propThread = task.spawn(function()
                 while propLooping do
                     if #selectedProps == 0 then
                         task.wait(0.5)
@@ -240,15 +244,18 @@ PropTab:CreateToggle({
 
 local SettingsTab = Window:CreateTab("Settings", 4483362458)
 
-local afkThread = nil
-local VirtualUser = game:GetService("VirtualUser")
+-- ══════════════════════════════════════
+--              ANTI AFK
+-- ══════════════════════════════════════
 
-local function simulateInput()
-    local cam = workspace.CurrentCamera
-    if not cam then return end
-    VirtualUser:Button2Down(Vector2.new(0, 0), cam.CFrame)
-    task.wait(0.1)
-    VirtualUser:Button2Up(Vector2.new(0, 0), cam.CFrame)
+local afkThread = nil
+
+local function doJump()
+    local character = game.Players.LocalPlayer.Character
+    if not character then return end
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if not humanoid then return end
+    humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
 end
 
 SettingsTab:CreateToggle({
@@ -259,8 +266,8 @@ SettingsTab:CreateToggle({
             if afkThread then task.cancel(afkThread) end
             afkThread = task.spawn(function()
                 while true do
-                    simulateInput()
-                    task.wait(840)
+                    task.wait(math.random(270, 450))
+                    doJump()
                 end
             end)
         else
@@ -272,19 +279,31 @@ SettingsTab:CreateToggle({
     end,
 })
 
+-- ══════════════════════════════════════
+--           STOP ALL LOOPS
+-- ══════════════════════════════════════
+
 SettingsTab:CreateButton({
     Name = "Stop All Loops",
     Callback = function()
         seedLooping = false
         itemLooping = false
         propLooping = false
+        if seedThread then task.cancel(seedThread) seedThread = nil end
+        if itemThread then task.cancel(itemThread) itemThread = nil end
+        if propThread then task.cancel(propThread) propThread = nil end
+        if afkThread then task.cancel(afkThread) afkThread = nil end
         Rayfield:Notify({
             Title = "Loops Stopped",
-            Content = "All auto-buy loops have been halted.",
+            Content = "All loops including Anti AFK have been halted.",
             Duration = 3,
         })
     end,
 })
+
+-- ══════════════════════════════════════
+--           NOTIFICATION LOG
+-- ══════════════════════════════════════
 
 SettingsTab:CreateToggle({
     Name = "Buy Notifications",
@@ -294,12 +313,19 @@ SettingsTab:CreateToggle({
     end,
 })
 
+-- ══════════════════════════════════════
+--           DESTROY / RESPAWN UI
+-- ══════════════════════════════════════
+
 SettingsTab:CreateButton({
     Name = "Destroy UI",
     Callback = function()
         seedLooping = false
         itemLooping = false
         propLooping = false
+        if seedThread then task.cancel(seedThread) seedThread = nil end
+        if itemThread then task.cancel(itemThread) itemThread = nil end
+        if propThread then task.cancel(propThread) propThread = nil end
         if afkThread then task.cancel(afkThread) afkThread = nil end
         Rayfield:Destroy()
     end,
@@ -308,6 +334,14 @@ SettingsTab:CreateButton({
 SettingsTab:CreateButton({
     Name = "Respawn UI",
     Callback = function()
-        loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+        seedLooping = false
+        itemLooping = false
+        propLooping = false
+        if seedThread then task.cancel(seedThread) seedThread = nil end
+        if itemThread then task.cancel(itemThread) itemThread = nil end
+        if propThread then task.cancel(propThread) propThread = nil end
+        if afkThread then task.cancel(afkThread) afkThread = nil end
+        Rayfield:Destroy()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/krmizi433-oss/auto-seed-buyer/refs/heads/main/seedbuyer.lua"))()
     end,
 })
