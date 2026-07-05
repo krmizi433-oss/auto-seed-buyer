@@ -372,3 +372,145 @@ SettingsTab:CreateButton({
         loadstring(game:HttpGet("https://raw.githubusercontent.com/krmizi433-oss/auto-seed-buyer/refs/heads/main/seedbuyer.lua"))()
     end,
 })
+
+
+-- ══════════════════════════════════════
+--           SEED PACK COLLECTOR
+-- ══════════════════════════════════════
+
+local SeedPackTab = Window:CreateTab("Seed Pack Collector", 4483362458)
+
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+
+local spPlayer = Players.LocalPlayer
+local spCharacter = spPlayer.Character or spPlayer.CharacterAdded:Wait()
+local spHRP = spCharacter:WaitForChild("HumanoidRootPart")
+local spHumanoid = spCharacter:WaitForChild("Humanoid")
+
+local SP_TWEEN_SPEED  = 14   -- studs/sec
+local SP_COOLDOWN     = 2    -- seconds between each Part
+
+local spRunning = false
+local spThread  = nil
+
+spPlayer.CharacterAdded:Connect(function(newChar)
+    spCharacter = newChar
+    spHRP       = newChar:WaitForChild("HumanoidRootPart")
+    spHumanoid  = newChar:WaitForChild("Humanoid")
+end)
+
+local function spTweenTime(from, to)
+    local dist = math.max((from - to).Magnitude, 4)
+    return dist / SP_TWEEN_SPEED
+end
+
+local function spCollectAll()
+    local container = workspace:WaitForChild("Map", 20)
+        and workspace.Map:WaitForChild("SeedPackSpawnServerLocations", 20)
+
+    if not container then
+        warn("[SeedPack] Could not find SeedPackSpawnServerLocations")
+        return
+    end
+
+    local parts = {}
+    for _, child in ipairs(container:GetChildren()) do
+        if child:IsA("BasePart") then
+            table.insert(parts, child)
+        end
+    end
+
+    if #parts == 0 then
+        warn("[SeedPack] No Parts found in SeedPackSpawnServerLocations")
+        return
+    end
+
+    for _, part in ipairs(parts) do
+        if not spRunning then break end
+
+        local prompt = part:FindFirstChildOfClass("ProximityPrompt")
+        if not prompt or not prompt.Enabled then
+            task.wait(0.2)
+            continue
+        end
+
+        -- tween directly to the part
+        local targetCFrame = CFrame.new(part.Position)
+        local info = TweenInfo.new(
+            spTweenTime(spHRP.Position, part.Position),
+            Enum.EasingStyle.Sine,
+            Enum.EasingDirection.InOut
+        )
+
+        spHumanoid.WalkSpeed = 0
+        spHumanoid.JumpPower = 0
+
+        local tween = TweenService:Create(spHRP, info, { CFrame = targetCFrame })
+        tween:Play()
+        tween.Completed:Wait()
+
+        task.wait(0.1)
+
+        fireproximityprompt(prompt)
+
+        task.wait(SP_COOLDOWN)
+
+        spHumanoid.WalkSpeed = 16
+        spHumanoid.JumpPower = 50
+    end
+
+    spHumanoid.WalkSpeed = 16
+    spHumanoid.JumpPower = 50
+    spRunning = false
+
+    Rayfield:Notify({
+        Title = "Seed Pack Collector",
+        Content = "All seed packs collected.",
+        Duration = 3,
+    })
+end
+
+SeedPackTab:CreateToggle({
+    Name = "Auto Collect Seed Packs",
+    CurrentValue = false,
+    Callback = function(state)
+        spRunning = state
+        if spThread then task.cancel(spThread) spThread = nil end
+        if state then
+            spThread = task.spawn(function()
+                while spRunning do
+                    spCollectAll()
+                    if spRunning then
+                        task.wait(5) -- wait before looping through all parts again
+                    end
+                end
+            end)
+        else
+            spHumanoid.WalkSpeed = 16
+            spHumanoid.JumpPower = 50
+        end
+    end,
+})
+
+SeedPackTab:CreateSlider({
+    Name = "Cooldown Between Parts (seconds)",
+    Range = {0.5, 5},
+    Increment = 0.5,
+    CurrentValue = 2,
+    Flag = "SeedPackCooldown",
+    Callback = function(val)
+        SP_COOLDOWN = val
+    end,
+})
+
+SeedPackTab:CreateSlider({
+    Name = "Tween Speed (studs/sec)",
+    Range = {5, 50},
+    Increment = 1,
+    CurrentValue = 14,
+    Flag = "SeedPackSpeed",
+    Callback = function(val)
+        SP_TWEEN_SPEED = val
+    end,
+})
