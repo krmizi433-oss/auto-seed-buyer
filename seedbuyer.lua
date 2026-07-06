@@ -484,7 +484,7 @@ AfkToggle = SettingsTab:CreateToggle({
             if afkThread then task.cancel(afkThread) end
             afkThread = task.spawn(function()
                 while true do
-                    task.wait(math.random(270, 450))
+                    task.wait(180)
                     doJump()
                 end
             end)
