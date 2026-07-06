@@ -406,7 +406,7 @@ local ServerTab = Window:CreateTab("Server Changer", 4483362458)
 
 local function fetchServers(cursor)
     local url = string.format(
-        "https://games.roblox.com/v1/games/%d/servers/Public?sortOrder=Asc&limit=100",
+        "https://games.roblox.com/v1/games/%d/servers/Public?sortOrder=Desc&limit=100&excludeFullGames=false",
         placeId
     )
     if cursor and cursor ~= "" then
@@ -424,14 +424,14 @@ local function buildServerList(statusLabel)
     isScanning = true
     local cursor = nil
     local pageCount = 0
-    local maxPages = 5
+    local maxPages = 20
 
     repeat
         local data = fetchServers(cursor)
         if not data then break end
 
         for _, server in ipairs(data.data or {}) do
-            local playerCount = server.playing or 0
+            local playerCount = server.playing or (server.playerTokens and #server.playerTokens) or 0
             local maxP = server.maxPlayers or Players.MaxPlayers
             if playerCount >= scSettings.minPlayers
                 and playerCount <= scSettings.maxPlayers
