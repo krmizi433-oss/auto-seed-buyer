@@ -1,5 +1,5 @@
 -- ══════════════════════════════════════
---           version = 12
+--           version = 13
 -- ══════════════════════════════════════
 
 local PREFIXES = {
@@ -11,8 +11,55 @@ local PREFIXES = {
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Event = ReplicatedStorage.SharedModules.Packet.RemoteEvent
 
-
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+-- ══════════════════════════════════════
+--              CONFIG LAYER
+-- ══════════════════════════════════════
+
+local CONFIG_FILE = "seedbuyer_config.json"
+
+local defaultConfig = {
+    selectedSeeds      = {},
+    selectedShopItems  = {},
+    selectedProps      = {},
+    seedDelay          = 0.2,
+    itemDelay          = 0.2,
+    propDelay          = 0.2,
+    seedPackCooldown   = 2,
+    seedPackSpeed      = 14,
+}
+
+local function loadConfig()
+    if isfile(CONFIG_FILE) then
+        local ok, decoded = pcall(function()
+            return game:GetService("HttpService"):JSONDecode(readfile(CONFIG_FILE))
+        end)
+        if ok and type(decoded) == "table" then
+            -- merge with defaults so missing keys don't break anything
+            for k, v in pairs(defaultConfig) do
+                if decoded[k] == nil then decoded[k] = v end
+            end
+            return decoded
+        end
+    end
+    return defaultConfig
+end
+
+local function saveConfig(cfg)
+    local ok, encoded = pcall(function()
+        return game:GetService("HttpService"):JSONEncode(cfg)
+    end)
+    if ok then
+        writefile(CONFIG_FILE, encoded)
+    end
+end
+
+local cfg = loadConfig()
+
+-- ══════════════════════════════════════
+--              PACKET LAYER
+-- ══════════════════════════════════════
 
 game:GetService("SoundService").DescendantAdded:Connect(function(v)
     if v:IsA("Sound") and v.Name == "TemporarySFX" and v.SoundId == "rbxassetid://550209561" then
@@ -31,6 +78,10 @@ local function fireAndNotify(prefix, name)
     Event:FireServer(encode(prefix, name))
 end
 
+-- ══════════════════════════════════════
+--              UI WINDOW
+-- ══════════════════════════════════════
+
 local Window = Rayfield:CreateWindow({
     Name = "Seed/Item/Prop buyer | discord.gg/JWqf2cBzYC",
     LoadingTitle = "discord.gg/JWqf2cBzYC",
@@ -38,9 +89,9 @@ local Window = Rayfield:CreateWindow({
 })
 
 Rayfield:Notify({
-    Title = "Suggestions & Missing Items?",
-    Content = "Join the Discord — discord.gg/JWqf2cBzYC",
-    Duration = 8,
+    Title = "Config Loaded",
+    Content = "Your last selections have been restored.",
+    Duration = 5,
 })
 
 -- ══════════════════════════════════════
@@ -57,20 +108,22 @@ local seeds = {
     "Venom Spitter", "Moon Bloom", "Hypno Bloom", "Dragon's Breath",
 }
 
-local selectedSeeds = {}
-local seedDelay = 0.2
-local seedLooping = false
-local seedThread = nil
-local SeedToggle = nil
+local selectedSeeds = cfg.selectedSeeds
+local seedDelay     = cfg.seedDelay
+local seedLooping   = false
+local seedThread    = nil
+local SeedToggle    = nil
 
 SeedTab:CreateDropdown({
     Name = "Select Seeds",
     Options = seeds,
-    CurrentOption = {},
+    CurrentOption = selectedSeeds,
     MultipleOptions = true,
     Flag = "SelectedSeeds",
     Callback = function(selected)
-        selectedSeeds = selected
+        selectedSeeds     = selected
+        cfg.selectedSeeds = selected
+        saveConfig(cfg)
     end,
 })
 
@@ -78,10 +131,12 @@ SeedTab:CreateSlider({
     Name = "Buy Delay (seconds)",
     Range = {0.1, 2.0},
     Increment = 0.05,
-    CurrentValue = 0.2,
+    CurrentValue = seedDelay,
     Flag = "SeedDelay",
     Callback = function(val)
-        seedDelay = val
+        seedDelay     = val
+        cfg.seedDelay = val
+        saveConfig(cfg)
     end,
 })
 
@@ -120,20 +175,22 @@ local shopItems = {
     "Super Watering Can", "Super Sprinkler",
 }
 
-local selectedShopItems = {}
-local itemDelay = 0.2
-local itemLooping = false
-local itemThread = nil
-local ItemToggle = nil
+local selectedShopItems = cfg.selectedShopItems
+local itemDelay         = cfg.itemDelay
+local itemLooping       = false
+local itemThread        = nil
+local ItemToggle        = nil
 
 ItemTab:CreateDropdown({
     Name = "Select Items",
     Options = shopItems,
-    CurrentOption = {},
+    CurrentOption = selectedShopItems,
     MultipleOptions = true,
     Flag = "SelectedShopItems",
     Callback = function(selected)
-        selectedShopItems = selected
+        selectedShopItems     = selected
+        cfg.selectedShopItems = selected
+        saveConfig(cfg)
     end,
 })
 
@@ -141,10 +198,12 @@ ItemTab:CreateSlider({
     Name = "Buy Delay (seconds)",
     Range = {0.1, 2.0},
     Increment = 0.05,
-    CurrentValue = 0.2,
+    CurrentValue = itemDelay,
     Flag = "ItemDelay",
     Callback = function(val)
-        itemDelay = val
+        itemDelay     = val
+        cfg.itemDelay = val
+        saveConfig(cfg)
     end,
 })
 
@@ -182,20 +241,22 @@ local props = {
     "Bear Trap Crate", "Boombox Crate", "Fence Crate", "Teleporter Pad Crate",
 }
 
-local selectedProps = {}
-local propDelay = 0.2
-local propLooping = false
-local propThread = nil
-local PropToggle = nil
+local selectedProps = cfg.selectedProps
+local propDelay     = cfg.propDelay
+local propLooping   = false
+local propThread    = nil
+local PropToggle    = nil
 
 PropTab:CreateDropdown({
     Name = "Select Props",
     Options = props,
-    CurrentOption = {},
+    CurrentOption = selectedProps,
     MultipleOptions = true,
     Flag = "SelectedProps",
     Callback = function(selected)
-        selectedProps = selected
+        selectedProps     = selected
+        cfg.selectedProps = selected
+        saveConfig(cfg)
     end,
 })
 
@@ -203,10 +264,12 @@ PropTab:CreateSlider({
     Name = "Buy Delay (seconds)",
     Range = {0.1, 2.0},
     Increment = 0.05,
-    CurrentValue = 0.2,
+    CurrentValue = propDelay,
     Flag = "PropDelay",
     Callback = function(val)
-        propDelay = val
+        propDelay     = val
+        cfg.propDelay = val
+        saveConfig(cfg)
     end,
 })
 
@@ -237,13 +300,13 @@ PropToggle = PropTab:CreateToggle({
 
 local SeedPackTab = Window:CreateTab("Seed Pack Collector", 4483362458)
 
-local Players = game:GetService("Players")
+local Players     = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 
 local spPlayer = Players.LocalPlayer
 
-local SP_TWEEN_SPEED = 14
-local SP_COOLDOWN    = 2
+local SP_TWEEN_SPEED = cfg.seedPackSpeed
+local SP_COOLDOWN    = cfg.seedPackCooldown
 
 local spRunning = false
 local spThread  = nil
@@ -271,7 +334,6 @@ local function spCollectAll()
     end
 
     if #parts == 0 then
-        warn("[SeedPack] No Parts found")
         return
     end
 
@@ -346,7 +408,7 @@ SeedPackToggle = SeedPackTab:CreateToggle({
             spThread = task.spawn(function()
                 while spRunning do
                     spCollectAll()
-                    if spRunning then task.wait(5) end
+                    if spRunning then task.wait(0.1) end
                 end
             end)
         else
@@ -366,10 +428,12 @@ SeedPackTab:CreateSlider({
     Name = "Cooldown Between Parts (seconds)",
     Range = {0.5, 5},
     Increment = 0.5,
-    CurrentValue = 2,
+    CurrentValue = SP_COOLDOWN,
     Flag = "SeedPackCooldown",
     Callback = function(val)
-        SP_COOLDOWN = val
+        SP_COOLDOWN            = val
+        cfg.seedPackCooldown   = val
+        saveConfig(cfg)
     end,
 })
 
@@ -377,10 +441,12 @@ SeedPackTab:CreateSlider({
     Name = "Tween Speed (studs/sec)",
     Range = {5, 50},
     Increment = 1,
-    CurrentValue = 14,
+    CurrentValue = SP_TWEEN_SPEED,
     Flag = "SeedPackSpeed",
     Callback = function(val)
-        SP_TWEEN_SPEED = val
+        SP_TWEEN_SPEED       = val
+        cfg.seedPackSpeed    = val
+        saveConfig(cfg)
     end,
 })
 
@@ -432,6 +498,32 @@ AfkToggle = SettingsTab:CreateToggle({
 })
 
 -- ══════════════════════════════════════
+--           RESET CONFIG
+-- ══════════════════════════════════════
+
+SettingsTab:CreateButton({
+    Name = "Reset Config to Defaults",
+    Callback = function()
+        cfg = {
+            selectedSeeds     = {},
+            selectedShopItems = {},
+            selectedProps     = {},
+            seedDelay         = 0.2,
+            itemDelay         = 0.2,
+            propDelay         = 0.2,
+            seedPackCooldown  = 2,
+            seedPackSpeed     = 14,
+        }
+        saveConfig(cfg)
+        Rayfield:Notify({
+            Title = "Config Reset",
+            Content = "Defaults written. Rejoin or respawn UI to apply.",
+            Duration = 4,
+        })
+    end,
+})
+
+-- ══════════════════════════════════════
 --           STOP ALL LOOPS
 -- ══════════════════════════════════════
 
@@ -447,14 +539,12 @@ local function stopAll()
     if spThread   then task.cancel(spThread)   spThread   = nil end
     if afkThread  then task.cancel(afkThread)  afkThread  = nil end
 
-    -- visually flip every toggle off
-    if SeedToggle    then SeedToggle:Set(false)     end
-    if ItemToggle    then ItemToggle:Set(false)     end
-    if PropToggle    then PropToggle:Set(false)     end
-    if SeedPackToggle then SeedPackToggle:Set(false) end
-    if AfkToggle     then AfkToggle:Set(false)      end
+    if SeedToggle     then SeedToggle:Set(false)      end
+    if ItemToggle     then ItemToggle:Set(false)       end
+    if PropToggle     then PropToggle:Set(false)       end
+    if SeedPackToggle then SeedPackToggle:Set(false)   end
+    if AfkToggle      then AfkToggle:Set(false)        end
 
-    -- restore movement in case seed pack was mid-tween
     local character = spPlayer.Character
     if character then
         local humanoid = character:FindFirstChildOfClass("Humanoid")
